@@ -1,0 +1,446 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>わが家の掲示板 | SHIORI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Yomogi&family=Zen+Maru+Gothic:wght@400;500;700&display=swap">
+<style>
+:root{
+  --cork-1:#a5815a; --cork-2:#8d6c46; --cork-3:#775c3a;
+  --paper:#f2e2b6; --paper-2:#fbf4e1; --paper-edge:rgba(0,0,0,.08);
+  --ink:#3a2d1f; --ink-soft:#6d5b42;
+  --pin:#b8433a; --pin-dark:#8a2f27;
+  --thread:#3f6f66; --thread-dark:#2b4e47;
+  --tape:rgba(255,250,230,.62);
+  --line:rgba(58,45,31,.35);
+  --danger:#b8433a;
+  --board-heading:#fdf7e8;
+  --board-heading-soft:rgba(253,247,232,.82);
+  --board-heading-shadow:rgba(0,0,0,.55);
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --cork-1:#4c3b26; --cork-2:#3c2f1e; --cork-3:#2f2518;
+    --paper:#3c3121; --paper-2:#473927;
+    --paper-edge:rgba(255,255,255,.08);
+    --ink:#f1e4c5; --ink-soft:#cdbb90;
+    --pin:#d3594d; --pin-dark:#9c3c32;
+    --thread:#5ea296; --thread-dark:#3f6e65;
+    --tape:rgba(255,255,255,.10);
+    --line:rgba(241,228,197,.35);
+  }
+}
+:root[data-theme="dark"]{
+  --cork-1:#4c3b26; --cork-2:#3c2f1e; --cork-3:#2f2518;
+  --paper:#3c3121; --paper-2:#473927;
+  --paper-edge:rgba(255,255,255,.08);
+  --ink:#f1e4c5; --ink-soft:#cdbb90;
+  --pin:#d3594d; --pin-dark:#9c3c32;
+  --thread:#5ea296; --thread-dark:#3f6e65;
+  --tape:rgba(255,255,255,.10);
+  --line:rgba(241,228,197,.35);
+}
+
+*{box-sizing:border-box;}
+[hidden]{display:none !important;}
+html{scroll-behavior:smooth;}
+body{
+  margin:0;
+  font-family:'Zen Maru Gothic','Hiragino Maru Gothic ProN',sans-serif;
+  color:var(--ink);
+  background-color:var(--cork-2);
+  background-image:
+    radial-gradient(rgba(0,0,0,.16) 1px, transparent 1.6px),
+    radial-gradient(rgba(255,255,255,.07) 1px, transparent 1.6px),
+    radial-gradient(rgba(0,0,0,.10) 1px, transparent 1.4px);
+  background-size:15px 15px, 21px 21px, 33px 33px;
+  background-position:0 0, 8px 11px, 4px 20px;
+}
+h1,h2,h3{font-family:'Yomogi',cursive; font-weight:400; text-wrap:balance; margin:0;}
+p{line-height:1.7;}
+
+/* ---- hero ---- */
+.hero{display:flex; justify-content:center; padding:32px 16px 12px;}
+.hero-note{
+  position:relative; background:var(--paper-2); color:var(--ink);
+  padding:20px 24px 24px; border-radius:3px; max-width:480px; width:100%; text-align:center;
+  box-shadow:0 8px 16px rgba(0,0,0,.28), 0 2px 4px rgba(0,0,0,.2);
+  transform:rotate(-1.2deg);
+}
+.hero-note h1{font-size:clamp(26px,7vw,34px); margin-bottom:8px;}
+.hero-sub{margin:0; color:var(--ink-soft); font-size:14px;}
+.pin-dot{
+  position:absolute; top:-9px; left:50%; transform:translateX(-50%);
+  width:16px; height:16px; border-radius:50%;
+  background:radial-gradient(circle at 32% 30%, #fff6, transparent 55%), var(--pin);
+  box-shadow:0 3px 4px rgba(0,0,0,.4), inset 0 -2px 3px var(--pin-dark);
+}
+.monitor-tag{
+  position:absolute; top:-12px; right:-10px; transform:rotate(9deg);
+  background:var(--thread); color:#fff; font-family:'Yomogi',cursive; font-size:13px;
+  line-height:1; padding:7px 13px 8px; border-radius:3px;
+  box-shadow:0 3px 7px rgba(0,0,0,.35);
+}
+.feedback-line{margin:10px 0 0; font-size:12.5px; color:var(--ink-soft);}
+.feedback-line a{color:var(--thread-dark); font-weight:700; text-decoration:underline; text-underline-offset:2px;}
+.share-line{margin:12px 0 0; font-size:12.5px; color:var(--ink-soft);}
+.share-row{display:flex; gap:6px; margin-top:6px;}
+.share-row input{
+  flex:1; font-size:12px; padding:6px 8px; border:1px solid var(--paper-edge); border-radius:4px;
+  background:#fffdf7; color:var(--ink-soft); font-family:inherit;
+}
+.share-row button{
+  font-family:'Zen Maru Gothic',sans-serif; font-size:12px; padding:6px 12px; border:none;
+  border-radius:14px; background:var(--thread); color:#fff; cursor:pointer; white-space:nowrap;
+}
+.share-row button:hover{background:var(--thread-dark);}
+
+/* ---- nav ---- */
+.tabs{
+  position:sticky; top:0; z-index:5; display:flex; gap:8px; flex-wrap:wrap;
+  justify-content:center; padding:14px 10px 20px;
+}
+.tab{
+  font-family:'Yomogi',cursive; font-size:16px; text-decoration:none; color:var(--ink);
+  background:var(--paper-2); padding:7px 14px 9px; border-radius:3px 3px 9px 9px;
+  box-shadow:0 4px 7px rgba(0,0,0,.28); white-space:nowrap;
+}
+.tab:nth-child(1){transform:rotate(-2deg);}
+.tab:nth-child(2){transform:rotate(1.5deg);}
+.tab:nth-child(3){transform:rotate(-1deg);}
+.tab:nth-child(4){transform:rotate(2deg);}
+.tab:nth-child(5){transform:rotate(-1.5deg);}
+.tab:focus-visible{outline:3px solid var(--thread); outline-offset:2px;}
+
+/* ---- sections ---- */
+.section{max-width:960px; margin:0 auto; padding:10px 16px 52px; scroll-margin-top:70px;}
+.section-title{font-size:24px; color:var(--board-heading); text-shadow:0 2px 4px var(--board-heading-shadow), 0 1px 1px var(--board-heading-shadow); margin-bottom:16px; padding-left:4px; letter-spacing:.02em;}
+.section-sub{color:var(--board-heading-soft); text-shadow:0 1px 2px var(--board-heading-shadow); font-size:13px; margin:-10px 0 16px 4px;}
+
+/* ---- board grid (memories / events / news) ---- */
+.board-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,170px)); justify-content:start; gap:22px 16px; align-items:start;}
+.empty-hint{grid-column:1/-1; margin:-4px 0 2px; font-size:13px; line-height:1.6; color:var(--board-heading-soft); text-shadow:0 1px 2px var(--board-heading-shadow);}
+
+/* polaroid (memories) */
+.polaroid{
+  position:relative; background:var(--paper-2); padding:10px 10px 14px; margin:0;
+  border-radius:2px; box-shadow:0 6px 12px rgba(0,0,0,.3);
+  transform:rotate(var(--r,0deg));
+}
+.polaroid img{display:block; width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:1px; background:var(--paper);}
+.polaroid figcaption{padding-top:10px;}
+.cap-text{margin:0 0 4px; font-size:14px; color:var(--ink);}
+.cap-meta{margin:0; font-family:'Yomogi',cursive; font-size:13px; color:var(--ink-soft);}
+.tape-corner{
+  position:absolute; top:-10px; left:50%; transform:translateX(-50%) rotate(-2deg);
+  width:64px; height:22px; background:var(--tape); border:1px solid var(--paper-edge);
+}
+
+/* memo note (events / news / text-only memories) */
+.note{
+  position:relative; background:var(--paper); padding:18px 16px 16px; border-radius:2px;
+  box-shadow:0 6px 12px rgba(0,0,0,.28); transform:rotate(var(--r,0deg));
+  background-image:repeating-linear-gradient(var(--line) 0 1px, transparent 1px 26px);
+  background-position:0 34px;
+}
+.note-pin{
+  position:absolute; top:-8px; left:50%; transform:translateX(-50%);
+  width:14px; height:14px; border-radius:50%;
+  background:radial-gradient(circle at 32% 30%, #fff6, transparent 55%), var(--pin);
+  box-shadow:0 3px 4px rgba(0,0,0,.4), inset 0 -2px 3px var(--pin-dark);
+}
+.note-tape{
+  position:absolute; top:-9px; left:14px; width:52px; height:20px;
+  background:var(--tape); border:1px solid var(--paper-edge); transform:rotate(-4deg);
+}
+.note-date{font-family:'Yomogi',cursive; font-size:15px; color:var(--thread-dark); margin:2px 0 6px;}
+.note-title{font-size:19px; margin:0 0 6px;}
+.note-body{font-size:14px; margin:0 0 10px; color:var(--ink);}
+.note-meta{margin:0; font-family:'Yomogi',cursive; font-size:13px; color:var(--ink-soft);}
+.note-photo{display:block; width:100%; aspect-ratio:4/3; object-fit:cover; border-radius:2px; margin:0 0 10px; background:var(--paper-2);}
+
+/* ---- growth record timeline ---- */
+.invite-card{
+  max-width:420px; background:var(--paper-2); border-radius:4px; padding:18px 20px;
+  box-shadow:0 6px 12px rgba(0,0,0,.25); color:var(--ink-soft); font-size:14px; line-height:1.8;
+}
+.growth-subject{max-width:520px; margin:0 0 36px;}
+.growth-subject-title{font-size:22px; color:var(--board-heading); text-shadow:0 2px 4px var(--board-heading-shadow), 0 1px 1px var(--board-heading-shadow); margin-bottom:14px; letter-spacing:.02em;}
+.timeline{list-style:none; margin:0; padding-left:22px; border-left:2px dashed var(--line);}
+.timeline-item{position:relative; padding-bottom:20px;}
+.timeline-item::before{
+  content:""; position:absolute; left:-27px; top:6px; width:10px; height:10px; border-radius:50%;
+  background:var(--pin); box-shadow:0 0 0 3px var(--cork-2);
+}
+.timeline-card{display:flex; gap:12px; align-items:flex-start; background:var(--paper-2); border-radius:4px; padding:10px 14px; box-shadow:0 4px 8px rgba(0,0,0,.25);}
+.timeline-thumb{width:60px; height:60px; object-fit:cover; border-radius:3px; flex:0 0 60px; background:var(--paper);}
+.timeline-thumb-empty{background:var(--paper);}
+.timeline-date{font-family:'Yomogi',cursive; font-size:14px; color:var(--thread-dark); margin:0 0 3px;}
+.timeline-caption{font-size:13px; margin:0 0 3px; color:var(--ink);}
+.timeline-meta{font-size:11px; color:var(--ink-soft); margin:0; font-family:'Yomogi',cursive;}
+
+.save-btn{
+  margin-top:6px; font-family:'Zen Maru Gothic',sans-serif; font-size:11px; padding:4px 10px;
+  border-radius:12px; border:1px solid var(--paper-edge); background:transparent; color:var(--thread-dark);
+  cursor:pointer;
+}
+.save-btn:hover{background:rgba(0,0,0,.06);}
+.save-btn:disabled{opacity:.6; cursor:default;}
+
+/* ---- comments ---- */
+.comments{margin-top:10px; padding-top:8px; border-top:1px dashed var(--line);}
+.comments-toggle{
+  background:none; border:none; padding:0; font-family:'Zen Maru Gothic',sans-serif; font-size:11.5px;
+  color:var(--thread-dark); cursor:pointer; text-decoration:underline; text-underline-offset:2px;
+}
+.comments-toggle:focus-visible{outline:2px solid var(--thread); outline-offset:2px;}
+.comments-list{margin:8px 0 0; padding:0; list-style:none; display:flex; flex-direction:column; gap:6px;}
+.comment-item{font-size:12px; line-height:1.5; color:var(--ink);}
+.comment-author{font-family:'Yomogi',cursive; color:var(--thread-dark); margin-right:4px;}
+.comment-form{display:flex; flex-direction:column; gap:5px; margin-top:8px;}
+.comment-form input[type=text]{
+  width:100%; font-family:inherit; font-size:12px; padding:6px 8px; border:1px solid var(--paper-edge);
+  border-radius:4px; background:#fffdf7; color:var(--ink);
+}
+.comment-form button{
+  align-self:flex-end; font-family:'Zen Maru Gothic',sans-serif; font-size:12px; padding:5px 14px;
+  border:none; border-radius:14px; background:var(--thread); color:#fff; cursor:pointer;
+}
+.comment-form button:hover{background:var(--thread-dark);}
+.comment-form button:disabled{opacity:.6; cursor:default;}
+.comment-error{color:var(--danger); font-size:11.5px; margin:0;}
+
+/* add card (shared) */
+.add-card{
+  font-family:'Zen Maru Gothic',sans-serif; font-size:14px; color:var(--paper-2);
+  background:rgba(255,255,255,.06); border:2px dashed rgba(251,244,225,.55); border-radius:4px;
+  min-height:140px; display:flex; align-items:center; justify-content:center; text-align:center;
+  cursor:pointer; padding:16px;
+}
+.add-card:hover{background:rgba(255,255,255,.12);}
+.add-card:focus-visible{outline:3px solid var(--thread); outline-offset:2px;}
+
+/* add form (shared) */
+.add-form{
+  grid-column:1/-1; background:var(--paper-2); border-radius:4px; padding:18px 20px 20px;
+  box-shadow:0 6px 14px rgba(0,0,0,.3); display:flex; flex-direction:column; gap:12px; max-width:360px;
+}
+.add-form label{font-size:13px; color:var(--ink-soft); display:flex; flex-direction:column; gap:5px;}
+.add-form input[type=text],
+.add-form input[type=date],
+.add-form textarea{
+  font-family:inherit; font-size:14px; padding:8px 10px; border:1px solid var(--paper-edge);
+  border-radius:4px; background:#fffdf7; color:var(--ink); resize:vertical;
+}
+.add-form input[type=file]{font-size:13px; color:var(--ink-soft);}
+.form-row{display:flex; gap:10px;}
+.form-actions{display:flex; gap:10px; align-items:center;}
+.btn{
+  font-family:'Zen Maru Gothic',sans-serif; font-weight:500; font-size:14px; cursor:pointer;
+  border:none; border-radius:20px; padding:9px 20px; background:var(--thread); color:#fff;
+}
+.btn:hover{background:var(--thread-dark);}
+.btn.ghost{background:transparent; color:var(--ink-soft); padding:9px 12px;}
+.form-error{color:var(--danger); font-size:13px; margin:0;}
+.thumb-preview{max-width:120px; border-radius:3px; display:block;}
+
+/* ---- family clothesline ---- */
+.clothesline{position:relative; padding:36px 4px 10px; overflow-x:auto;}
+.clothesline::before{
+  content:""; position:absolute; top:22px; left:0; right:0; height:2px;
+  background:repeating-linear-gradient(90deg, var(--line) 0 8px, transparent 8px 12px);
+  min-width:100%;
+}
+.line-row{display:flex; gap:22px; width:max-content; min-width:100%; padding-bottom:10px;}
+.fam-card{position:relative; flex:0 0 140px;}
+.clip{
+  position:absolute; top:8px; left:50%; transform:translateX(-50%); z-index:2;
+  width:0; height:0; border-left:9px solid transparent; border-right:9px solid transparent;
+  border-top:16px solid var(--pin-dark); filter:drop-shadow(0 2px 2px rgba(0,0,0,.35));
+}
+.fam-photo{
+  background:var(--paper-2); padding:8px 8px 12px; border-radius:2px; margin-top:14px;
+  box-shadow:0 6px 12px rgba(0,0,0,.3); transform:rotate(var(--r,0deg));
+}
+.fam-photo img{width:100%; aspect-ratio:1; object-fit:cover; border-radius:1px; background:var(--paper);}
+.fam-photo .fam-initial{
+  width:100%; aspect-ratio:1; border-radius:1px; background:var(--paper);
+  display:flex; align-items:center; justify-content:center; font-family:'Yomogi',cursive;
+  font-size:38px; color:var(--thread-dark);
+}
+.fam-name{font-size:15px; margin:8px 0 2px; text-align:center;}
+.fam-role{font-family:'Yomogi',cursive; font-size:13px; color:var(--thread-dark); text-align:center; margin:0 0 4px;}
+.fam-note{font-size:12px; color:var(--ink-soft); text-align:center; margin:0;}
+.fam-add{flex:0 0 150px; margin-top:14px; min-height:190px;}
+.line-row .add-form{flex:0 0 300px;}
+
+.offline-note{max-width:520px; margin:40px auto; background:var(--paper-2); padding:20px; border-radius:4px; text-align:center; color:var(--ink);}
+.hidden{display:none !important;}
+
+footer{text-align:center; padding:20px; color:var(--paper-2); opacity:.6; font-size:12px;}
+</style>
+</head>
+<body>
+
+<div class="hero">
+  <div class="hero-note">
+    <span class="pin-dot" aria-hidden="true"></span>
+    <span class="monitor-tag">モニター版</span>
+    <h1>わが家の掲示板</h1>
+    <p class="hero-sub">思い出、予定、近況をみんなでここに貼っていこう</p>
+    <p class="feedback-line">これはモニター期間中のテスト版です。使ってみたご感想は<a href="https://claude.ai/code/artifact/551282a2-4b58-492a-baba-46e40068f52e" target="_blank" rel="noopener">こちらのアンケート</a>にお願いします。</p>
+    <p class="share-line">このページのURLが、このご家族専用の掲示板です。家族に共有してください。</p>
+    <div class="share-row">
+      <input type="text" id="share-url" readonly>
+      <button type="button" id="share-copy">コピー</button>
+    </div>
+  </div>
+</div>
+
+<nav class="tabs" aria-label="セクション">
+  <a class="tab" href="#memories">思い出</a>
+  <a class="tab" href="#growth">成長記録</a>
+  <a class="tab" href="#events">家族の予定</a>
+  <a class="tab" href="#news">お知らせ</a>
+  <a class="tab" href="#family">家族紹介</a>
+</nav>
+
+<div id="offline-notice" class="offline-note hidden">
+  掲示板の読み込みに失敗しました。<code>firebase-config.js</code>の設定を確認するか、少し時間をおいて開き直してみてください。
+</div>
+
+<section id="memories" class="section">
+  <h2 class="section-title">思い出</h2>
+  <div class="board-grid" id="memories-grid"></div>
+</section>
+
+<section id="growth" class="section">
+  <h2 class="section-title">成長記録</h2>
+  <p class="section-sub">「思い出」で「だれ・何の記録？」を入力すると、ここに時系列でまとまります</p>
+  <div id="growth-wrap"></div>
+</section>
+
+<section id="events" class="section">
+  <h2 class="section-title">家族の予定</h2>
+  <p class="section-sub">近い日付から順に並びます</p>
+  <div class="board-grid" id="events-grid"></div>
+</section>
+
+<section id="news" class="section">
+  <h2 class="section-title">お知らせ</h2>
+  <p class="section-sub">最近の投稿が上に来ます</p>
+  <div class="board-grid" id="news-grid"></div>
+</section>
+
+<section id="family" class="section">
+  <h2 class="section-title">家族紹介</h2>
+  <div class="clothesline">
+    <div class="line-row" id="family-row"></div>
+  </div>
+</section>
+
+<footer>わが家だけの、小さなあつまり場所。(モニター版)</footer>
+
+<template id="tpl-memory-form">
+  <form class="add-form" novalidate>
+    <label>お名前
+      <input type="text" name="author" required>
+    </label>
+    <label>いつのこと？
+      <input type="date" name="date" required>
+    </label>
+    <label>写真(なくてもOK)
+      <input type="file" name="photo" accept="image/png,image/jpeg,image/gif,image/webp">
+    </label>
+    <img class="thumb-preview hidden" alt="選んだ写真のプレビュー">
+    <label>だれ・何の記録?(なくてもOK)
+      <input type="text" name="subject" placeholder="例:すず、はなちゃん">
+    </label>
+    <label>ひとこと
+      <textarea name="caption" rows="3" placeholder="いつ、どこで、どんなこと？"></textarea>
+    </label>
+    <p class="form-error hidden"></p>
+    <div class="form-actions">
+      <button type="submit" class="btn">貼る</button>
+      <button type="button" class="btn ghost" data-cancel>やめる</button>
+    </div>
+  </form>
+</template>
+
+<template id="tpl-event-form">
+  <form class="add-form" novalidate>
+    <label>お名前
+      <input type="text" name="author" required>
+    </label>
+    <div class="form-row">
+      <label style="flex:1">日付
+        <input type="date" name="date" required>
+      </label>
+    </div>
+    <label>予定の名前
+      <input type="text" name="title" required placeholder="例:おばあちゃんの誕生日会">
+    </label>
+    <label>写真(なくてもOK)
+      <input type="file" name="photo" accept="image/png,image/jpeg,image/gif,image/webp">
+    </label>
+    <img class="thumb-preview hidden" alt="選んだ写真のプレビュー">
+    <label>メモ(なくてもOK)
+      <textarea name="note" rows="2"></textarea>
+    </label>
+    <p class="form-error hidden"></p>
+    <div class="form-actions">
+      <button type="submit" class="btn">ピン留めする</button>
+      <button type="button" class="btn ghost" data-cancel>やめる</button>
+    </div>
+  </form>
+</template>
+
+<template id="tpl-news-form">
+  <form class="add-form" novalidate>
+    <label>お名前
+      <input type="text" name="author" required>
+    </label>
+    <label>お知らせ
+      <textarea name="text" rows="3" required placeholder="近況やお知らせを書いてね"></textarea>
+    </label>
+    <p class="form-error hidden"></p>
+    <div class="form-actions">
+      <button type="submit" class="btn">貼る</button>
+      <button type="button" class="btn ghost" data-cancel>やめる</button>
+    </div>
+  </form>
+</template>
+
+<template id="tpl-family-form">
+  <form class="add-form" novalidate>
+    <label>名前
+      <input type="text" name="name" required placeholder="例:さくら">
+    </label>
+    <label>続柄・呼び名
+      <input type="text" name="role" placeholder="例:長女、おばあちゃん">
+    </label>
+    <label>写真(なくてもOK)
+      <input type="file" name="photo" accept="image/png,image/jpeg,image/gif,image/webp">
+    </label>
+    <img class="thumb-preview hidden" alt="選んだ写真のプレビュー">
+    <label>ひとこと(なくてもOK)
+      <textarea name="note" rows="2"></textarea>
+    </label>
+    <p class="form-error hidden"></p>
+    <div class="form-actions">
+      <button type="submit" class="btn">紹介を貼る</button>
+      <button type="button" class="btn ghost" data-cancel>やめる</button>
+    </div>
+  </form>
+</template>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-storage-compat.js"></script>
+<script src="firebase-config.js" charset="utf-8"></script>
+<script src="board.js" charset="utf-8"></script>
+</body>
+</html>

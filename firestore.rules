@@ -1,0 +1,11 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // フェーズ1(アカウントなし)は「URLを知っていれば読み書きできる」という
+    // 今までのArtifact版と同じ信頼モデル。フェーズ2でアカウントを導入したら、
+    // ここを board の管理者だけ書き込み可、のように絞る。
+    match /boards/{boardId}/{document=**} {
+      allow read, write: if true;
+    }
+  }
+}
